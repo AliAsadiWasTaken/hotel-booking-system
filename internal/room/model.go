@@ -7,13 +7,13 @@ import (
 )
 
 type Room struct {
-	ID            uuid.UUID
-	HotelID       uuid.UUID
-	Name          string
-	BedCount      int
-	Capacity      int
-	Quantity      int
-	PricePerNight float64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            uuid.UUID `json:"id"`
+	HotelID       uuid.UUID `json:"hotel_id"`
+	Name          string    `json:"name"`
+	BedCount      int       `json:"bed_count"`
+	Capacity      int       `json:"capacity"`
+	Quantity      int       `json:"quantity"`
+	PricePerNight float64   `json:"price_per_night"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }

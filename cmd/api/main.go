@@ -4,11 +4,15 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/booking"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/config"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/database"
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/hotel"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/logger"
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/room"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/router"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/server"
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/user"
 )
 
 func main() {
@@ -33,24 +37,31 @@ func main() {
 
 	appLogger.Info("database connected")
 
-	mux := router.New()
+	// Repositories
+	hotelRepo := hotel.NewRepository(db)
+	roomRepo := room.NewRepository(db)
+	userRepo := user.NewRepository(db)
+	bookingRepo := booking.NewRepository(db)
 
-	s := server.New(
-		mux,
-		cfg.HTTP.Address,
-	)
+	// Services
+	hotelService := hotel.NewService(hotelRepo)
+	roomService := room.NewService(roomRepo)
+	userService := user.NewService(userRepo)
+	bookingService := booking.NewService(db, bookingRepo, roomRepo)
 
-	appLogger.Info(
-		"starting server",
-		"address", cfg.HTTP.Address,
-	)
+	// Handlers
+	hotelHandler := hotel.NewHandler(hotelService)
+	roomHandler := room.NewHandler(roomService)
+	userHandler := user.NewHandler(userService)
+	bookingHandler := booking.NewHandler(bookingService)
 
-	err = s.ListenAndServe()
-	if err != nil {
-		appLogger.Error(
-			"server stopped",
-			"error", err,
-		)
+	mux := router.New(hotelHandler, roomHandler, userHandler, bookingHandler)
+
+	s := server.New(mux, cfg.HTTP.Address)
+
+	appLogger.Info("starting server", "address", cfg.HTTP.Address)
+
+	if err := s.ListenAndServe(); err != nil {
+		appLogger.Error("server stopped", "error", err)
 	}
-
 }

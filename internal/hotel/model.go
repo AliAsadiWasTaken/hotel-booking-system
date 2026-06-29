@@ -7,11 +7,11 @@ import (
 )
 
 type Hotel struct {
-	ID        uuid.UUID
-	Name      string
-	Address   string
-	City      string
-	Country   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Address   string    `json:"address"`
+	City      string    `json:"city"`
+	Country   string    `json:"country"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
