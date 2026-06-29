@@ -10,9 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DBTX is implemented by both *pgxpool.Pool and pgx.Tx.
-// Repositories depend on this interface so they work identically
-// whether they are called with a connection pool or inside a transaction.
+// DBTX is satisfied by both *pgxpool.Pool and pgx.Tx, allowing repositories
+// to operate transparently within or outside a transaction.
 type DBTX interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)

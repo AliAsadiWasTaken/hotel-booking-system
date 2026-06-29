@@ -50,10 +50,9 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (Room, error) {
 	return room, nil
 }
 
-// GetByIDForUpdate locks the room row for the duration of the calling transaction.
-// Use this when you need to check availability and create a booking atomically —
-// it prevents another transaction from reading or modifying this row until the
-// current transaction commits or rolls back.
+// GetByIDForUpdate acquires a row-level lock on the room for the duration of
+// the caller's transaction. Used during booking creation to serialize
+// availability checks and prevent overbooking under concurrent requests.
 func (r *Repository) GetByIDForUpdate(ctx context.Context, id uuid.UUID) (Room, error) {
 	var room Room
 
