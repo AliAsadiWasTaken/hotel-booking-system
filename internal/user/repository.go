@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/database"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db database.DBTX
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
+func NewRepository(db database.DBTX) *Repository {
 	return &Repository{db: db}
 }
 

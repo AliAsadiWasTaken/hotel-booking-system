@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aliasadiwastaken/hotel-booking-system/internal/database"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db database.DBTX
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
+func NewRepository(db database.DBTX) *Repository {
 	return &Repository{db: db}
 }
 
@@ -45,6 +45,29 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (Room, error) {
 		Scan(&room.ID, &room.HotelID, &room.Name, &room.BedCount, &room.Capacity, &room.Quantity, &room.PricePerNight, &room.CreatedAt, &room.UpdatedAt)
 	if err != nil {
 		return Room{}, fmt.Errorf("get room by id: %w", err)
+	}
+
+	return room, nil
+}
+
+// GetByIDForUpdate locks the room row for the duration of the calling transaction.
+// Use this when you need to check availability and create a booking atomically —
+// it prevents another transaction from reading or modifying this row until the
+// current transaction commits or rolls back.
+func (r *Repository) GetByIDForUpdate(ctx context.Context, id uuid.UUID) (Room, error) {
+	var room Room
+
+	query := `
+		SELECT id, hotel_id, name, bed_count, capacity, quantity, price_per_night, created_at, updated_at
+		FROM rooms
+		WHERE id = $1
+		FOR UPDATE
+	`
+
+	err := r.db.QueryRow(ctx, query, id).
+		Scan(&room.ID, &room.HotelID, &room.Name, &room.BedCount, &room.Capacity, &room.Quantity, &room.PricePerNight, &room.CreatedAt, &room.UpdatedAt)
+	if err != nil {
+		return Room{}, fmt.Errorf("get room by id for update: %w", err)
 	}
 
 	return room, nil

@@ -5,8 +5,19 @@ import (
 	"fmt"
 
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/config"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// DBTX is implemented by both *pgxpool.Pool and pgx.Tx.
+// Repositories depend on this interface so they work identically
+// whether they are called with a connection pool or inside a transaction.
+type DBTX interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
 
 func Connect(cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
 	connectionString := fmt.Sprintf(
