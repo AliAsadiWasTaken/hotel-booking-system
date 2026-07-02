@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/booking"
 	"github.com/aliasadiwastaken/hotel-booking-system/internal/config"
@@ -55,13 +61,30 @@ func main() {
 	userHandler := user.NewHandler(userService)
 	bookingHandler := booking.NewHandler(bookingService)
 
-	mux := router.New(hotelHandler, roomHandler, userHandler, bookingHandler)
-
+	mux := router.New(appLogger, hotelHandler, roomHandler, userHandler, bookingHandler)
 	s := server.New(mux, cfg.HTTP.Address)
 
-	appLogger.Info("starting server", "address", cfg.HTTP.Address)
+	go func() {
+		appLogger.Info("starting server", "address", cfg.HTTP.Address)
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			appLogger.Error("server stopped unexpectedly", "error", err)
+			os.Exit(1)
+		}
+	}()
 
-	if err := s.ListenAndServe(); err != nil {
-		appLogger.Error("server stopped", "error", err)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	appLogger.Info("shutting down server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := s.Shutdown(ctx); err != nil {
+		appLogger.Error("server forced to shutdown", "error", err)
+		os.Exit(1)
 	}
+
+	appLogger.Info("server stopped")
 }
